@@ -5,8 +5,6 @@ from sympy import *
 from os import system
 system("clear")
 
-pprint("hola")
-
 YT = Symbol('YT')
 YC = Symbol('YC')
 
