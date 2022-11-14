@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import math 
 from numpy.linalg import inv
 from sympy import *
 from os import system
@@ -21,50 +22,71 @@ VM = ((Sx-Sy)**2+(Sy-Sz)**2+(Sz-Sx)**2 + 6*(Sxy**2+Sxz**2+Syz**2))/(2*YT**2)-1
 
 # ---- Drucker Prager Behaviour function ----
 
+A = (2/math.sqrt(3))*(YT*YC)/(YT+YC)
+B = (1/math.sqrt(3))*(YT-YC)/(YT+YC)
+
+DP = ((Sx-Sy)**2+(Sy-Sz)**2+(Sz-Sx)**2 + 6*(Sxy**2+Sxz**2+Syz**2))/(6*A**2) - (B*(Sx+Sy+Sz)/A)**2-2*B*(Sx+Sy+Sz)/A-1
+
 # Plot VM for Sx and Sy
 
-replacements = [(Sz,0),(Sxy,0),(Sxz,0),(Syz,0),(YT,10)]
+YTv = 10
 
-VM1 = simplify(VM.subs(replacements))
+replacements = [(Sz,0),(Sxy,0),(Sxz,0),(Syz,0),(YT, YTv)]
+VMSxSy = simplify(VM.subs(replacements))
 
-A = solve(VM1, Sy, dict=true)
+replacements = [(Sz,0),(Sy,0),(Sxz,0),(Syz,0),(YT, YTv)]
+VMSxSxy = simplify(VM.subs(replacements))
 
-Sxmax = solve(A[0][Sy], Sx)[0]
-Sxmin = solve(A[1][Sy], Sx)[0]
-
-SxPos = np.arange(0,Sxmax,0.1)
-SxPos = np.append(SxPos,Sxmax)
-SxNeg = np.arange(0,Sxmin,-0.1)
-SxNeg = np.append(SxNeg,Sxmin)
-
-SyPosPos = []
-SyPosNeg = []
-for i in SxPos:
-    SyPosPos.append(-A[0][Sy].subs(Sx,i))
-    SyPosNeg.append(A[0][Sy].subs(Sx,i))
-
-SyNegPos = []
-SyNegNeg = []
-for i in SxNeg:
-    SyNegPos.append(A[1][Sy].subs(Sx,i))
-    SyNegNeg.append(-A[1][Sy].subs(Sx,i))
+replacements = [(Sx,0),(Sy,0),(Sz,0),(Syz,0),(YT, YTv)]
+VMSxySxz = simplify(VM.subs(replacements))
 
 
+# Plot DP for Sx and Sy
 
-#p1 = plot_implicit(Eq(Sx**2+Sy**2-Sx*Sy-100, 0),(Sx, -12, 12), (Sy, -12, 12), adaptive=False)
+YTv = 10
+YCv = 15
 
-p1 = plot_implicit(Eq(VM1, 0),(Sx, -12, 12), (Sy, -12, 12), adaptive=False)
+replacements = [(Sz,0),(Sxy,0),(Sxz,0),(Syz,0),(YT,YTv),(YC,YCv)]
+DPSxSy = simplify(DP.subs(replacements))
 
-#fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4.5))
-fig, ax1 = plt.subplots()
-ax1.title.set_text('Von Mises')
-ax1.set_ylabel("Sy")
-ax1.set_xlabel("Sx")
+replacements = [(Sz,0),(Sy,0),(Sxz,0),(Syz,0),(YT,YTv),(YC,YCv)]
+DPSxSxy = simplify(DP.subs(replacements))
+
+replacements = [(Sx,0),(Sy,0),(Sz,0),(Syz,0),(YT,YTv),(YC,YCv)]
+DPSxySxz = simplify(DP.subs(replacements))
+
+# Ploting
+
+YTplot = YTv + 0.2*YTv
+YCplot = -(YCv + 0.5*YCv)
+
+VMSxSyPlot = plot_implicit(Eq(VMSxSy, 0),(Sx, YCplot, YTplot), (Sy, YCplot, YTplot), label='VM', line_color='blue', show=False, legend=True)
+VMSxSxyPlot = plot_implicit(Eq(VMSxSxy, 0),(Sx, YCplot, YTplot), (Sxy, YCplot, YTplot),line_color='blue', show=False, legend=True)
+VMSxySxzPlot = plot_implicit(Eq(VMSxySxz, 0),(Sxy, YCplot, YTplot), (Sxz, YCplot, YTplot),line_color='blue', show=False, legend=True)
+
+DPSxSyPlot = plot_implicit(Eq(DPSxSy, 0),(Sx, YCplot, YTplot), (Sy, YCplot, YTplot), label='DP', line_color='red', show=False, legend=True)
+DPSxSxyPlot = plot_implicit(Eq(DPSxSxy, 0),(Sx, YCplot, YTplot), (Sxy, YCplot, YTplot), line_color='red', show=False, legend=True)
+DPSxySxzPlot = plot_implicit(Eq(DPSxySxz, 0),(Sxy, YCplot, YTplot), (Sxz, YCplot, YTplot), line_color='red', show=False, legend=True)
+
+
+
+VMSxSyPlot.append(DPSxSyPlot[0])
+VMSxSyPlot.show()
+VMSxSxyPlot.append(DPSxSxyPlot[0])
+VMSxSxyPlot.show()
+VMSxySxzPlot.append(DPSxySxzPlot[0])
+VMSxySxzPlot.show()
+
+#fig, (VMSxSyPlot, DPSxSyPlot) = plt.subplots(1, 2, figsize=(8, 4.5))
+#fig, ax1 = plt.subplots()
+#ax1.title.set_text('Von Mises')
+#ax1.set_ylabel("Sy")
+#ax1.set_xlabel("Sx")
 #TBTTauCorrected = [num*factorK for num in TBTTau]
-ax1.plot(SxPos, SyPosPos, label = "line 1", linestyle=":", color="tab:orange")
-ax1.plot(SxPos, SyPosNeg, label = "line 1", linestyle=":", color="tab:orange")
-ax1.plot(SxNeg, SyNegPos, label = "line 1", linestyle=":", color="tab:orange")
-ax1.plot(SxNeg, SyNegNeg, label = "line 1", linestyle=":", color="tab:orange")
+#ax1.plot(SxPos, SyPosPos, label = "line 1", linestyle=":", color="tab:orange")
+#ax1.plot(SxPos, SyPosNeg, label = "line 1", linestyle=":", color="tab:orange")
+#ax1.plot(SxNeg, SyNegPos, label = "line 1", linestyle=":", color="tab:orange")
+#ax1.plot(SxNeg, SyNegNeg, label = "line 1", linestyle=":", color="tab:orange")
 #ax1.plot(TBTTauCorrected, Zpos, label = "line 1",                color="tab:orange")
 #ax1.plot(PSTau, Zpos, label = "line 1",                color="tab:blue")
 #ax2.plot(integrantTB,          Zpos, label = "TB Original",  linestyle=":", color="tab:orange")
@@ -82,7 +104,7 @@ ax1.plot(SxNeg, SyNegNeg, label = "line 1", linestyle=":", color="tab:orange")
 #ax1.title.set_text(r'$\tau^{TB}$(Q) vs $\tau^{PS}$(Q)')
 #ax2.title.set_text(r'$\Pi^{TB}$(Q) vs $\Pi^{PS}$(Q)')
 
-fig.subplots_adjust(bottom=0.2)
-labels = ["TB Original","TB Corrected","PS"]
-fig.legend(labels=labels, loc="lower center", ncol=3)
-plt.show()
+#fig.subplots_adjust(bottom=0.2)
+#labels = ["TB Original","TB Corrected","PS"]
+#fig.legend(labels=labels, loc="lower center", ncol=3)
+#plt.show()
